@@ -1320,6 +1320,59 @@
       attribution: "&copy; OpenStreetMap contributors"
     }).addTo(map);
 
+    async function getNearbyPlaces(lat, lon, type) {
+
+    let query = "";
+
+    if (type === "petrol") {
+        query = `
+        [out:json];
+        node
+          ["amenity"="fuel"]
+          (around:5000, ${lat}, ${lon});
+        out;
+        `;
+    }
+
+    if (type === "restaurant") {
+        query = `
+        [out:json];
+        node
+          ["amenity"="restaurant"]
+          (around:5000, ${lat}, ${lon});
+        out;
+        `;
+    }
+
+    const response = await fetch(
+        "https://overpass-api.de/api/interpreter",
+        {
+            method: "POST",
+            body: query
+        }
+    );
+
+    const data = await response.json();
+
+    return data.elements;
+}
+
+async function showNearbyPlaces(lat, lon, type) {
+
+    const places = await getNearbyPlaces(lat, lon, type);
+
+    places.forEach(place => {
+
+        const marker = L.marker([place.lat, place.lon])
+            .addTo(map);
+
+        marker.bindPopup(`
+            <b>${place.tags.name || "Unknown"}</b><br>
+            ${type}
+        `);
+    });
+}
+    
     const bounds = [];
     getVehicles().forEach(function (v) {
       const latlng = LOCATION_LATLNG[v.location] || [22.5726, 88.3639];
@@ -2060,3 +2113,24 @@
   seedData();
   renderPage();
 })();
+
+navigator.geolocation.getCurrentPosition((position) => {
+
+    const lat = position.coords.latitude;
+    const lon = position.coords.longitude;
+
+    map.setView([lat, lon], 13);
+
+    // USER LOCATION MARKER
+    L.marker([lat, lon])
+        .addTo(map)
+        .bindPopup("You are here")
+        .openPopup();
+
+    // SHOW PETROL PUMPS
+    showNearbyPlaces(lat, lon, "petrol");
+
+    // SHOW RESTAURANTS
+    showNearbyPlaces(lat, lon, "restaurant");
+
+});
