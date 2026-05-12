@@ -2114,23 +2114,3 @@ async function showNearbyPlaces(lat, lon, type) {
   renderPage();
 })();
 
-navigator.geolocation.getCurrentPosition((position) => {
-
-    const lat = position.coords.latitude;
-    const lon = position.coords.longitude;
-
-    map.setView([lat, lon], 13);
-
-    // USER LOCATION MARKER
-    L.marker([lat, lon])
-        .addTo(map)
-        .bindPopup("You are here")
-        .openPopup();
-
-    // SHOW PETROL PUMPS
-    showNearbyPlaces(lat, lon, "petrol");
-
-    // SHOW RESTAURANTS
-    showNearbyPlaces(lat, lon, "restaurant");
-
-});
